@@ -1,7 +1,7 @@
 [project]
-name = "agenticioc"
+name = "AgenticPMS"
 version = "0.1.0"
-description = "IoC scaffold for building hierarchical autonomous agents in a modular and pluggable way"
+description = "Agentic Construction of Execution-Ready Project Roadmaps" 
 readme = "README.md"
 requires-python = ">=3.11, <3.12"
 dependencies = [
