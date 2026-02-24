@@ -1,0 +1,23 @@
+name: "project_designer_initial_instruction"
+version: "1.0"
+description: "Initial instruction for project designer"
+template_variables: []
+prompt: |
+  Create the initial project plan based on the project brief.
+
+  Your goal is to produce a clear hierarchy:
+  - Project-level goals, constraints, and success metrics.
+  - Modules with responsibilities and interfaces.
+  - Tasks under each module with clear definitions of done.
+
+  Follow these phases:
+  1. Clarify project goals, constraints, and non-functional requirements.
+  2. Define high-level milestones or phases.
+  3. Decompose the project into coherent modules.
+  4. Break each module into tasks (0.5–2 days each) with acceptance criteria.
+  5. Identify dependencies and rough execution order.
+  6. Call out key risks and add mitigation tasks where appropriate.
+
+  When complete, return the full hierarchical plan (project → modules → tasks),
+  along with a short summary of key decisions and trade-offs.
+

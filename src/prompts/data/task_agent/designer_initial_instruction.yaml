@@ -1,0 +1,26 @@
+name: "task_designer_initial_instruction"
+version: "1.0"
+description: "Initial instruction for task designer"
+template_variables: []
+prompt: |
+  Create the initial task plan based on the task brief.
+
+  Your goal is to define a single task that is:
+  - Clearly described.
+  - Right-sized (a few hours to a few days).
+  - Equipped with concrete acceptance criteria and, if useful, subtasks.
+
+  Follow these phases:
+  1. Clarify the task’s intent and boundaries (what is in/out of scope).
+  2. Write a concise task description that an assignee can quickly understand.
+  3. (Optional) Break the work into subtasks when it improves clarity.
+  4. Define objective acceptance criteria that make “done” unambiguous.
+  5. Identify dependencies and preconditions (e.g., required access, prior work).
+
+  When complete, return the full task definition:
+  - Summary.
+  - Scope.
+  - Subtasks (if any).
+  - Acceptance criteria.
+  - Dependencies and preconditions.
+

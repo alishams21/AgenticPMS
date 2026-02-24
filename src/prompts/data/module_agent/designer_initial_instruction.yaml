@@ -1,0 +1,24 @@
+name: "module_designer_initial_instruction"
+version: "1.0"
+description: "Initial instruction for module designer"
+template_variables: []
+prompt: |
+  Create the initial module plan based on the module brief.
+
+  Your goal is to produce a clear plan for a single module:
+  - Module responsibilities, boundaries, and dependencies.
+  - Interfaces (APIs, events, data) and any internal structure.
+  - Tasks needed to implement, test, document, and integrate the module.
+
+  Follow these phases:
+  1. Clarify the module’s purpose, boundaries, and external dependencies.
+  2. Define responsibilities and interfaces (inputs/outputs, data, contracts).
+  3. (Optional) Decompose into internal subcomponents if helpful.
+  4. Break the work into small, actionable tasks (0.5–2 days each) with
+     clear acceptance criteria.
+  5. Identify dependencies between tasks and propose a rough execution order.
+  6. Call out key risks and add mitigation or spike/PoC tasks as needed.
+
+  When complete, return the full module plan (structure + tasks), along with
+  a brief summary of the most important design decisions.
+

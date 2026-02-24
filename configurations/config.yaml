@@ -10,7 +10,7 @@ openai:
   service_tier: "default"
 
 defaults:
-  - application: plan_project # Application yaml file name in configurations/application folder
+  - experiment: plan_project # Experiment yaml file name in configurations/experiment folder
   - project_agent: workflow_project_agent # Top-level agent managing the overall project
   - module_agent: workflow_module_agent # Agent managing modules/components within the project
   - task_agent: workflow_task_agent # Agent managing individual tasks under each module
