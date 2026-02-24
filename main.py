@@ -4,11 +4,15 @@ from datetime import timedelta
 from pathlib import Path
 
 import hydra
+import logging
+import os
 
 from omegaconf import DictConfig, OmegaConf
 from omegaconf.omegaconf import open_dict
-
+from src.utils.print_utils import cyan
 from src.utils.omegaconf import register_resolvers
+from src.utils.logging import FileLoggingContext
+console_logger = logging.getLogger(__name__)
 
 def run_local(cfg: DictConfig):
 
@@ -36,23 +40,39 @@ def run_local(cfg: DictConfig):
         if "application" in cfg:
             cfg.application.output_dir = output_dir
 
-    # Print the resolved config.
-    print(OmegaConf.to_yaml(cfg))
+    # Set up experiment-level logging to file while preserving stdout.
+    experiment_log_path = output_dir / "experiment.log"
+    experiment_log_path.parent.mkdir(parents=True, exist_ok=True)
+    with FileLoggingContext(log_file_path=experiment_log_path, suppress_stdout=False):
+        console_logger.info(f"Outputs will be saved to: {output_dir}")
+        print(cyan(f"Outputs will be saved to:"), output_dir)
+        
+        (output_dir.parents[1] / "latest-run").unlink(missing_ok=True)
+        (output_dir.parents[1] / "latest-run").symlink_to(
+            output_dir, target_is_directory=True
+        )
 
-    # Print the output directory.
-    print(f"Output directory: {output_dir}")
+        # Log and save resolved configuration.
+        resolved_config_yaml = OmegaConf.to_yaml(cfg)
+        console_logger.info("Resolved configuration:\n" + resolved_config_yaml)
+        print(cyan("Resolved configuration:"))
+        print(resolved_config_yaml)
 
-    # Print the application name.
-    print(f"Application name: {cfg.application._name}")
+        # Save config to output directory for reproducibility.
+        config_file = output_dir / "resolved_config.yaml"
+        with open(config_file, "w") as f:
+            f.write(resolved_config_yaml)
+        console_logger.info(f"Saved resolved config to: {config_file}")
+        print(cyan(f"Saved resolved config to: {config_file}"))
 
-    # Print the project agent config name.
-    print(f"Project agent: {cfg.project_agent._name}")
+        # Launch experiment.
+        console_logger.info("Starting application execution")
 
-    # Print the module agent config name.
-    print(f"Module agent: {cfg.module_agent._name}")
 
-    # Print the task agent config name.
-    print(f"Task agent: {cfg.task_agent._name}")
+        console_logger.info(
+            "Experiment execution completed in "
+            f"{timedelta(seconds=time.time() - start_time)}"
+        )
     
 @hydra.main(version_base=None, config_path="configurations", config_name="config")
 def run(cfg: DictConfig):
@@ -61,7 +81,13 @@ def run(cfg: DictConfig):
             "Must specify a name for the run with command line argument '+name=[name]'"
         )
 
-
+    # Configure logging level from LOGLEVEL environment variable.
+    log_level = os.environ.get("LOGLEVEL", "INFO").upper()
+    logging.basicConfig(
+        level=getattr(logging, log_level, logging.INFO),
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+    console_logger.info(f"Logging level: {log_level}")
     run_local(cfg)
 
 
