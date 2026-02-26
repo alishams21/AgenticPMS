@@ -6,6 +6,14 @@
 - **Task/worker agents**: execute concrete tasks, call tools, and report status back to the project agent.
 - **Workflow definitions**: YAML‑based configurations (see `configurations/`) that wire agents, tools, and memory together without changing code.
 
+### Features
+
+- **Planner/designer/critic loop**: iterative refinement with dedicated planner, designer, and critic agents.
+- **Checkpointing**: save and resume runs at defined points.
+- **Reset-on-degradation**: automatically roll back when quality regresses.
+- **Session persistence**: preserve agent state and context across runs.
+- **Run/config wiring**: bind runs to YAML configs so experiments and workflows are driven by configuration.
+
 ### Getting started
 
 **Install dependencies**

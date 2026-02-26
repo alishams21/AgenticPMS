@@ -1,19 +1,15 @@
 defaults:
   - core_project_agent
 
-# Agent configurations
+# Agent configurations (workflow_* keys + base_stateful_agent expected keys)
 agents:
-  workflow_planner_agent:
-    name: "project_planner"
-    max_turns: 500
-    prompt: PLANNER_AGENT
-
-  workflow_manager_agent:
-    name: "project_manager"
+  # Keys required by BaseStatefulAgent (_create_designer_agent, _create_critic_agent, _create_planner_agent)
+  designer_agent:
+    name: "project_designer"
     max_turns: 1000
-    prompt: MANAGER_AGENT
-
-  workflow_critic_agent:
+  critic_agent:
     name: "project_critic"
     max_turns: 500
-    prompt: CRITIC_AGENT
+  planner_agent:
+    name: "project_planner"
+    max_turns: 500

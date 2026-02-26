@@ -1,6 +1,14 @@
 import logging
 from pathlib import Path
 
+
+class BaseLogger:
+    """Minimal logger interface with output_dir for agents and experiments."""
+
+    def __init__(self, output_dir: Path | str):
+        self.output_dir = Path(output_dir)
+
+
 class FileLoggingContext:
     """Context manager to redirect all loggers to specific log files.
 

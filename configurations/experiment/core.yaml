@@ -12,8 +12,6 @@ csv_path: null
 
 # List of project/module/task prompts (used if csv_path is null)
 prompts: [
-  "Create the project roadmap including all major modules and milestones.",
-  "Plan the authentication module with tasks and subtasks assigned to team members.",
   "Plan the frontend dashboard module, including UI design tasks and testing tasks."
 ]
 
@@ -25,8 +23,8 @@ num_workers: 1
 # Set start_stage to resume from a specific stage
 # Set stop_stage to stop after a specific stage
 pipeline:
-  start_stage: "project"       # Options: project, module, task, subtask
-  stop_stage: "subtask"        # Options: project, module, task, subtask
+  start_stage: "project"       # Options: project, module, task
+  stop_stage: "project"        # Options: project, module, task
   resume_from_path: null       # Path to previous experiment output
   parallel_modules: false      # Parallelize modules (mutually exclusive with num_workers > 1)
   max_parallel_modules: 1

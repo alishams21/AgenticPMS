@@ -1,17 +1,19 @@
 import time
 
+import logging
+import os
 from datetime import timedelta
 from pathlib import Path
 
 import hydra
-import logging
-import os
+from dotenv import load_dotenv
 
 from omegaconf import DictConfig, OmegaConf
 from omegaconf.omegaconf import open_dict
 from src.utils.print_utils import cyan
 from src.utils.omegaconf import register_resolvers
 from src.utils.logging import FileLoggingContext
+from src.experiments import build_experiment
 console_logger = logging.getLogger(__name__)
 
 def run_local(cfg: DictConfig):
@@ -35,10 +37,12 @@ def run_local(cfg: DictConfig):
     
     
     # Set up the output directory (Hydra output dir + run name from +name=...).
-    output_dir = Path(hydra_cfg.runtime.output_dir) 
+    output_dir = Path(hydra_cfg.runtime.output_dir)
     with open_dict(cfg):
         if "application" in cfg:
             cfg.application.output_dir = output_dir
+        if "experiment" in cfg:
+            cfg.experiment.output_dir = output_dir
 
     # Set up experiment-level logging to file while preserving stdout.
     experiment_log_path = output_dir / "experiment.log"
@@ -66,8 +70,12 @@ def run_local(cfg: DictConfig):
         print(cyan(f"Saved resolved config to: {config_file}"))
 
         # Launch experiment.
-        console_logger.info("Starting application execution")
-
+        console_logger.info("Starting experiment execution")
+        experiment = build_experiment(cfg=cfg)
+        for task in cfg.experiment.tasks:
+            console_logger.info(f"Executing task: {task}")
+            experiment.exec_task(task)
+            console_logger.info(f"Completed task: {task}")
 
         console_logger.info(
             "Experiment execution completed in "
@@ -76,6 +84,10 @@ def run_local(cfg: DictConfig):
     
 @hydra.main(version_base=None, config_path="configurations", config_name="config")
 def run(cfg: DictConfig):
+    # Load environment variables from .env in the project root (next to this file)
+    env_path = Path(__file__).parent / ".env"
+    load_dotenv(dotenv_path=env_path, override=False)
+
     if "name" not in cfg:
         raise ValueError(
             "Must specify a name for the run with command line argument '+name=[name]'"
@@ -87,7 +99,14 @@ def run(cfg: DictConfig):
         level=getattr(logging, log_level, logging.INFO),
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
-    console_logger.info(f"Logging level: {log_level}")
+        # Configure separate tracing API key if provided.
+    tracing_api_key = os.environ.get("OPENAI_TRACING_KEY")
+    if tracing_api_key:
+        from agents.tracing import set_tracing_export_api_key
+
+        set_tracing_export_api_key(tracing_api_key)
+        console_logger.info("Using separate API key for tracing exports")
+        
     run_local(cfg)
 
 
