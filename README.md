@@ -13,6 +13,9 @@
 - **Reset-on-degradation**: automatically roll back when quality regresses.
 - **Session persistence**: preserve agent state and context across runs.
 - **Run/config wiring**: bind runs to YAML configs so experiments and workflows are driven by configuration.
+- **Internal tool-calling flow**: at each stage, agents call internal tools as illustrated in the diagram below.
+
+![Agents internal tool flow](figures/agents_internal.png)
 
 ### Getting started
 
