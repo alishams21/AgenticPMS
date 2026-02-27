@@ -9,8 +9,8 @@
 ### Features
 
 - **Planner/designer/critic loop**: iterative refinement with dedicated planner, designer, and critic agents.
-- **Checkpointing**: save and resume runs at defined points.
-- **Reset-on-degradation**: automatically roll back when quality regresses.
+- **Checkpointing**: in‑memory snapshots of the current plan and critic scores for each run, providing intra‑run fault tolerance when combined with reset tools.
+- **Reset-on-degradation**: optional rollback tool that compares the latest scores to the previous checkpoint and, if quality regresses, restores the last good plan while leaving the underlying SQLite session history intact, so bad iterations do not corrupt long‑lived memory.
 - **Session persistence**: preserve agent state and context across runs.
 - **Run/config wiring**: bind runs to YAML configs so experiments and workflows are driven by configuration.
 - **Internal tool-calling flow**: at each stage, agents call internal tools as illustrated in the diagram below.
