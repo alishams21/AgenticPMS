@@ -11,6 +11,6 @@ prompt: |
   - Stop when the plan is clear, feasible, and aligned with the brief.
 
   Start by calling `request_initial_project_design()` to create the base plan. Then
-  alternate between `request_project_critique()` and `request_project_design_change()`
+  alternate between `request_critique()` and `request_design_change()`
   until the stopping conditions in the planner prompt are met.
 

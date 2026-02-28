@@ -3,24 +3,20 @@ version: "1.0"
 description: "Initial instruction for task designer"
 template_variables: []
 prompt: |
-  Create the initial task plan based on the task brief.
+  Create the initial task plan based on the module plan.
 
-  Your goal is to define a single task that is:
-  - Clearly described.
-  - Right-sized (a few hours to a few days).
-  - Equipped with concrete acceptance criteria and, if useful, subtasks.
+  Your goal is to define tasks for **each module** in the input:
+  - Parse the module plan and identify all modules.
+  - For each module: define tasks (0.5–2 days each) with acceptance criteria.
+  - Ensure tasks cover implementation, tests, observability, docs, integration.
+  - Document dependencies between tasks.
 
   Follow these phases:
-  1. Clarify the task’s intent and boundaries (what is in/out of scope).
-  2. Write a concise task description that an assignee can quickly understand.
-  3. (Optional) Break the work into subtasks when it improves clarity.
-  4. Define objective acceptance criteria that make “done” unambiguous.
-  5. Identify dependencies and preconditions (e.g., required access, prior work).
+  1. Parse the module plan and list all modules.
+  2. For each module, break the work into actionable tasks.
+  3. Add acceptance criteria and definitions of done.
+  4. Identify dependencies and sequencing.
+  5. Verify completeness and consistency.
 
-  When complete, return the full task definition:
-  - Summary.
-  - Scope.
-  - Subtasks (if any).
-  - Acceptance criteria.
-  - Dependencies and preconditions.
-
+  When complete, return the full task plan (all tasks grouped by module).
+  Each task should be small, clear, and assignable.

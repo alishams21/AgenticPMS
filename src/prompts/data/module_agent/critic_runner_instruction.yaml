@@ -8,8 +8,8 @@ prompt: |
   Your goals are to:
   - Assess clarity and structure of the module (responsibilities, boundaries, interfaces).
   - Judge technical soundness and alignment with non-functional requirements.
-  - Identify risks, dependencies, and missing or oversized tasks.
-  - Check alignment with the original module brief and project context.
+  - Identify risks, dependencies, and missing or oversized modules.
+  - Check alignment with the project plan and that each component has one or more modules.
 
   Provide:
   1. A brief summary of overall plan quality.

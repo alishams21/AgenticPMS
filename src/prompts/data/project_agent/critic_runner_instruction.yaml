@@ -6,7 +6,7 @@ prompt: |
   Evaluate the current project plan according to your critic prompt.
 
   Your goals are to:
-  - Assess clarity and structure of the project → modules → tasks hierarchy.
+  - Assess clarity and structure of the project-level components.
   - Judge feasibility, scope, and execution readiness.
   - Identify risks, missing work, and problematic dependencies.
   - Check alignment with the original project brief.

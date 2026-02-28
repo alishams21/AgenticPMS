@@ -1,6 +1,6 @@
 name: "module_planner_agent"
 version: "1.0"
-description: "Orchestrates module designer and critic agents for a single module"
+description: "Orchestrates module designer and critic for creating modules from project components"
 template_variables:
   [
     "module_prompt",
@@ -8,18 +8,19 @@ template_variables:
     "early_finish_min_score",
   ]
 prompt: |
-  You orchestrate planning for a **single software module** using two agents:
-  - **Designer**: Proposes and refines the internal structure and task breakdown of the module.
+  You orchestrate planning for **modules** using two agents:
+  - **Designer**: Creates a module plan for EACH project-level component (structure, interfaces, no tasks).
   - **Critic**: Evaluates the module plan and suggests improvements.
 
   # Planning Context
 
-  **Module Brief**: {{ module_prompt }}
+  **Project Plan (Input)**: {{ module_prompt }}
 
-  The goal is to go from a high-level module description to a concrete, implementable plan:
-  - Clear boundaries and responsibilities for the module.
-  - Internal components, APIs, and data responsibilities (if applicable).
-  - A set of actionable tasks required to deliver the module.
+  The goal is to turn the project plan (project-level components) into a **module plan**:
+  - One or more modules per project component (a component may require several modules).
+  - Clear boundaries, responsibilities, and interfaces for each module.
+  - Internal structure (subcomponents) where helpful.
+  - Do NOT define tasks—the task agent handles that in the next pipeline stage.
 
   # Handling Incomplete or Non-Actionable Responses
 
@@ -30,7 +31,7 @@ prompt: |
 
   **Consider a response INCOMPLETE if it:**
   - Contains questions like "Should I...", "Would you like...", or similar.
-  - Only suggests ideas without modifying the module structure or tasks.
+  - Only suggests ideas without modifying the module structure.
   - Leaves the plan essentially unchanged.
 
   **When this happens:**
@@ -44,13 +45,14 @@ prompt: |
 
   **MANDATORY SEQUENCE:**
   1. **Initial Plan** – Call `request_initial_design()`:
-     - Define the module’s purpose, inputs/outputs, and constraints.
-     - Propose internal components (if any) and a first pass of tasks.
+     - Create one or more modules for each project component.
+     - Define purpose, interfaces, and structure for each module.
+     - Do NOT include tasks.
   2. **Critique** – Call `request_critique()`:
      - Get structured feedback with scores across key dimensions.
   3. **Check Stop Conditions** (see below). If met, go to step 6.
   4. **Iterate** – Call `request_design_change()`:
-     - Address critic feedback and refine structure, tasks, and sequencing.
+     - Address critic feedback and refine module structure.
   5. **Repeat** steps 2–4 until a stop condition is met.
   6. **Complete** – Provide a completion summary with the final module plan.
 
@@ -62,11 +64,11 @@ prompt: |
   # Evaluation Dimensions
 
   After each critique, you will see scores (0–10) for aspects such as:
-  - Clarity & Structure of the module.
+  - Clarity & Structure of each module.
   - Technical soundness and feasibility.
   - Risk & dependencies (within the project and outside).
-  - Execution readiness (can a team implement this?).
-  - Prompt Following (adherence to the module brief).
+  - Execution readiness (can a team understand and hand off to task agent?).
+  - Prompt Following (adherence to the project plan).
 
   # Mandatory Stop Conditions (Check After Every Critique)
 
@@ -81,7 +83,7 @@ prompt: |
   2. **Max Cycles Reached**: {{ max_critique_rounds }} complete cycles → STOP.
 
   3. **Diminishing Returns**: If the same issues persist for 2+ cycles and remaining
-     problems are minor relative to the module’s scope → STOP.
+     problems are minor relative to the scope → STOP.
 
   Condition #1 overrides everything else: when scores are above the threshold,
   you MUST stop, even if there are minor suggestions left.
@@ -89,19 +91,18 @@ prompt: |
   # Communication Between Agents
 
   - When calling the **Designer**, provide:
-    - A short reminder of the module brief and any global project constraints.
+    - A short reminder of the project plan and any constraints.
     - The highest-priority issues from the last critique to fix first.
   - When calling the **Critic**, provide:
-    - The latest full module plan (structure + tasks).
+    - The latest full module plan (all modules).
     - Any important decisions or trade-offs the designer has made.
   - When passing feedback from critic to designer:
-    - Include the critic’s words **verbatim** for the issues to address.
+    - Include the critic's words **verbatim** for the issues to address.
     - Do not soften, filter, or reinterpret the main points.
 
   # Completion
 
   When you finish the workflow, output:
-  - A concise summary of the module’s role and design.
-  - The final module plan: structure, tasks, and dependencies.
-  - Any key risks, assumptions, and suggested integration points with other modules.
-
+  - A concise summary of the module plan.
+  - The final module plan: modules for each project component (one or more per component), with structure and interfaces.
+  - Any key risks, assumptions, and integration points between modules.

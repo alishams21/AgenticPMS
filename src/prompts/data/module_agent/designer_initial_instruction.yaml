@@ -3,22 +3,21 @@ version: "1.0"
 description: "Initial instruction for module designer"
 template_variables: []
 prompt: |
-  Create the initial module plan based on the module brief.
+  Create the initial module plan based on the project plan.
 
-  Your goal is to produce a clear plan for a single module:
-  - Module responsibilities, boundaries, and dependencies.
-  - Interfaces (APIs, events, data) and any internal structure.
-  - Tasks needed to implement, test, document, and integrate the module.
+  Your goal is to produce **modules for each project-level component** in the input:
+  - Parse the project plan and identify all components.
+  - For each component: define one or more modules (name, responsibilities, interfaces, internal structure).
+  - A component may require several modules depending on its scope.
+  - Ensure modules are coherent and interfaces are clear.
+  - Do NOT define tasks—the task agent will do that in the next stage.
 
   Follow these phases:
-  1. Clarify the module’s purpose, boundaries, and external dependencies.
-  2. Define responsibilities and interfaces (inputs/outputs, data, contracts).
-  3. (Optional) Decompose into internal subcomponents if helpful.
-  4. Break the work into small, actionable tasks (0.5–2 days each) with
-     clear acceptance criteria.
-  5. Identify dependencies between tasks and propose a rough execution order.
-  6. Call out key risks and add mitigation or spike/PoC tasks as needed.
+  1. Parse the project plan and list all components.
+  2. For each component, define its module (purpose, boundaries, interfaces).
+  3. Add internal structure (subcomponents) where it improves clarity.
+  4. Document dependencies between modules.
+  5. Verify completeness and consistency.
 
-  When complete, return the full module plan (structure + tasks), along with
-  a brief summary of the most important design decisions.
-
+  When complete, return the full module plan (all modules in one document).
+  Do NOT break modules into tasks.

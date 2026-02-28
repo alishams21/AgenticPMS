@@ -9,13 +9,13 @@ prompt: |
   {{ instruction }}
 
   Focus on improving:
-  - Project/module/task structure and naming.
-  - Task granularity and definitions of done.
+  - Project-level component structure and naming.
+  - Component boundaries, interfaces, and dependencies.
   - Dependencies, sequencing, and risk mitigation.
   - Alignment with the project brief and constraints.
 
-  Make concrete changes to modules and tasks so that the updated plan
-  directly responds to the critic’s points.
+  Make concrete changes to the project components so that the updated plan
+  directly responds to the critic’s points. Do not add modules or tasks.
 
   After making changes, summarize:
   - What you modified and why.
