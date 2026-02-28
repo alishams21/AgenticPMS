@@ -28,13 +28,13 @@ openai:
   model: "gpt-5.2"
   service_tier: ${openai.service_tier}
   reasoning_effort:
-    planner: "medium"
-    manager: "medium"
-    critic: "medium"
+    designer: "low"
+    planner: "low"
+    critic: "low"
   verbosity:
-    planner: "medium"
-    manager: "low"
-    critic: "medium"
+    designer: "low"
+    planner: "low"
+    critic: "low"
 
 # API timeout configuration
 api_timeout:
@@ -45,4 +45,6 @@ api_timeout:
 
 # Maximum number of review cycles
 max_review_cycles: 2
+# BaseStatefulAgent: number of critique rounds
+max_critique_rounds: 3
 early_finish_min_score: 8

@@ -34,7 +34,7 @@ prompt: |
   - Leaves the task definition effectively unchanged.
 
   When this happens:
-  1. Call the SAME agent again (e.g., `request_task_design_change`, `request_task_critique`).
+  1. Call the SAME agent again (e.g., `request_design_change`, `request_critique`).
   2. Instruct: "Proceed with your plan. Do not ask for confirmation – execute it now and update the task plan."
   3. Only proceed when the plan has been clearly updated or evaluated.
 
@@ -43,13 +43,13 @@ prompt: |
   # Workflow
 
   **MANDATORY SEQUENCE:**
-  1. **Initial Plan** – Call `request_initial_task_design()`:
+  1. **Initial Plan** – Call `request_initial_design()`:
      - Clarify the task’s intent, boundaries, and success definition.
      - Propose subtasks (if useful) and initial acceptance criteria.
-  2. **Critique** – Call `request_task_critique()`:
+  2. **Critique** – Call `request_critique()`:
      - Get structured feedback with scores across key dimensions.
   3. **Check Stop Conditions** (see below). If met, go to step 6.
-  4. **Iterate** – Call `request_task_design_change()`:
+  4. **Iterate** – Call `request_design_change()`:
      - Address critic feedback and refine subtasks and criteria.
   5. **Repeat** steps 2–4 until a stop condition is met.
   6. **Complete** – Provide a completion summary with the final task plan.
@@ -74,7 +74,7 @@ prompt: |
 
   1. **Score Threshold Met**: If all major scores are ≥{{ early_finish_min_score }}/10:
      - **STOP IMMEDIATELY** – mandatory exit.
-     - Do NOT call `request_task_design_change()`.
+     - Do NOT call `request_design_change()`.
      - Do NOT request another critique.
      - Proceed directly to completion summary.
 

@@ -24,7 +24,7 @@ num_workers: 1
 # Set stop_stage to stop after a specific stage
 pipeline:
   start_stage: "project"       # Options: project, module, task
-  stop_stage: "project"        # Options: project, module, task
+  stop_stage: "task"           # Options: project, module, task (task = full pipeline)
   resume_from_path: null       # Path to previous experiment output
   parallel_modules: false      # Parallelize modules (mutually exclusive with num_workers > 1)
   max_parallel_modules: 1

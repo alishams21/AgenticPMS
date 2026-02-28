@@ -138,6 +138,64 @@ class ProjectCritiqueWithScores(CritiqueWithScores):
 
 
 @dataclass
+class ModuleCritiqueWithScores(CritiqueWithScores):
+    """Module plan critic with five evaluation dimensions (0–10 each).
+
+    Matches the categories in module_agent critic prompts.
+    """
+
+    clarity_structure: CategoryScore
+    """Clarity and structure of module purpose, boundaries, organization."""
+    technical_soundness: CategoryScore
+    """Technical soundness and feasibility of structure/approach."""
+    risk_dependencies: CategoryScore
+    """Risk and dependency management."""
+    execution_readiness: CategoryScore
+    """Execution readiness (actionable tasks, definitions of done)."""
+    prompt_following: CategoryScore
+    """Adherence to module brief requirements."""
+
+    def get_scores(self) -> list[CategoryScore]:
+        """Return all module critique category scores."""
+        return [
+            self.clarity_structure,
+            self.technical_soundness,
+            self.risk_dependencies,
+            self.execution_readiness,
+            self.prompt_following,
+        ]
+
+
+@dataclass
+class TaskCritiqueWithScores(CritiqueWithScores):
+    """Task plan critic with five evaluation dimensions (0–10 each).
+
+    Matches the categories in task_agent critic prompts.
+    """
+
+    clarity: CategoryScore
+    """Clarity and understandability for assignee."""
+    scope_feasibility: CategoryScore
+    """Scope and feasibility (right-sized, realistic)."""
+    coverage: CategoryScore
+    """Coverage of subtasks/steps and criteria."""
+    execution_readiness: CategoryScore
+    """Execution readiness (can start immediately)."""
+    prompt_following: CategoryScore
+    """Adherence to task brief and context."""
+
+    def get_scores(self) -> list[CategoryScore]:
+        """Return all task critique category scores."""
+        return [
+            self.clarity,
+            self.scope_feasibility,
+            self.coverage,
+            self.execution_readiness,
+            self.prompt_following,
+        ]
+
+
+@dataclass
 class ManipulandCritiqueWithScores(CritiqueWithScores):
     """Manipuland agent critique with standard categories.
 

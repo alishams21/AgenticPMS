@@ -1,19 +1,17 @@
 defaults:
   - core_task_agent
 
-# Agent configurations
+# Used by BaseExperiment.build_task_agent to select agent class
+_name: workflow_task_agent
+
+# Agent configurations (BaseStatefulAgent expects designer_agent, critic_agent, planner_agent)
 agents:
-  planner_agent:
-    name: "task_planner"
-    max_turns: 200
-    prompt: PLANNER_AGENT
-
-  manager_agent:
-    name: "task_manager"
-    max_turns: 400
-    prompt: MANAGER_AGENT
-
+  designer_agent:
+    name: "task_designer"
+    max_turns: 300
   critic_agent:
     name: "task_critic"
     max_turns: 200
-    prompt: CRITIC_AGENT
+  planner_agent:
+    name: "task_planner"
+    max_turns: 64

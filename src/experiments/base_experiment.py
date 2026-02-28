@@ -5,7 +5,9 @@ from pathlib import Path
 
 from omegaconf import DictConfig, OmegaConf
 
+from src.module_agents.base_module_agent import BaseModuleAgent
 from src.project_agents.base_project_agent import BaseProjectAgent
+from src.task_agents.base_task_agent import BaseTaskAgent
 from src.utils.logging import BaseLogger
 
 
@@ -14,12 +16,14 @@ class BaseExperiment(ABC):
     Abstract base class for plan-generation experiments.
 
     Experiments define tasks (e.g. plan_project) that run sequentially.
-    Each experiment specifies compatible project agents and supports
+    Each experiment specifies compatible project/module/task agents and supports
     parallel or single runs over multiple prompts.
     """
 
-    # Each key must match a yaml file under configurations/project_agent/<key>.yaml
+    # Each key must match a yaml file under configurations/<agent_type>_agent/<key>.yaml
     compatible_project_agents: dict[str, type] = {}
+    compatible_module_agents: dict[str, type] = {}
+    compatible_task_agents: dict[str, type] = {}
 
     def __init__(self, cfg: DictConfig):
         self.cfg = cfg
@@ -54,6 +58,56 @@ class BaseExperiment(ABC):
                 f"Project agent '{agent_name}' not found in compatible_project_agents. "
                 "Ensure each key matches a yaml file under configurations/project_agent "
                 "without the .yaml suffix."
+            )
+
+        return compatible_agents[agent_name](
+            cfg=OmegaConf.create(agent_config),
+            logger=logger,
+        )
+
+    @staticmethod
+    def build_module_agent(
+        cfg_dict: dict | DictConfig,
+        compatible_agents: dict[str, type],
+        logger: BaseLogger,
+    ) -> BaseModuleAgent:
+        """Build module agent from config."""
+        config_dict = (
+            OmegaConf.to_container(cfg_dict, resolve=True)
+            if isinstance(cfg_dict, DictConfig)
+            else cfg_dict
+        )
+        agent_config = config_dict["module_agent"]
+        agent_name = agent_config["_name"]
+
+        if agent_name not in compatible_agents:
+            raise ValueError(
+                f"Module agent '{agent_name}' not found in compatible_module_agents."
+            )
+
+        return compatible_agents[agent_name](
+            cfg=OmegaConf.create(agent_config),
+            logger=logger,
+        )
+
+    @staticmethod
+    def build_task_agent(
+        cfg_dict: dict | DictConfig,
+        compatible_agents: dict[str, type],
+        logger: BaseLogger,
+    ) -> BaseTaskAgent:
+        """Build task agent from config."""
+        config_dict = (
+            OmegaConf.to_container(cfg_dict, resolve=True)
+            if isinstance(cfg_dict, DictConfig)
+            else cfg_dict
+        )
+        agent_config = config_dict["task_agent"]
+        agent_name = agent_config["_name"]
+
+        if agent_name not in compatible_agents:
+            raise ValueError(
+                f"Task agent '{agent_name}' not found in compatible_task_agents."
             )
 
         return compatible_agents[agent_name](

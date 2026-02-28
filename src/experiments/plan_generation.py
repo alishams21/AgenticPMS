@@ -10,7 +10,9 @@ from pathlib import Path
 from omegaconf import DictConfig, OmegaConf
 
 from src.experiments.base_experiment import BaseExperiment
+from src.module_agents.stateful_module_agent import StatefulModuleAgent
 from src.project_agents.stateful_project_agent import StatefulProjectAgent
+from src.task_agents.stateful_task_agent import StatefulTaskAgent
 from src.utils.logging import BaseLogger, FileLoggingContext
 from src.utils.parallel import run_parallel_isolated
 from src.utils.print_utils import bold_green, yellow
@@ -47,6 +49,102 @@ def _load_prompts_from_csv(csv_path: str) -> list[tuple[int, str]]:
     return prompts_with_ids
 
 
+def _run_pipeline_stages(
+    prompt: str,
+    out_path: Path,
+    cfg_dict: dict,
+    start_stage: str,
+    stop_stage: str,
+) -> str | None:
+    """Run project → module → task pipeline stages for a single prompt.
+
+    Args:
+        prompt: Initial project brief.
+        out_path: Output directory for this prompt (e.g. prompt_000).
+        cfg_dict: Resolved config as dict.
+        start_stage: First stage to run (project, module, or task).
+        stop_stage: Last stage to run (project, module, or task).
+
+    Returns:
+        Final plan text from the last stage, or None on failure.
+    """
+    from omegaconf import OmegaConf
+
+    logger = BaseLogger(output_dir=out_path)
+    cfg = OmegaConf.create(cfg_dict)
+
+    project_plan_path = out_path / "project_plan.md"
+    module_plan_path = out_path / "module_plan.md"
+    task_plan_path = out_path / "task_plan.md"
+
+    stages = PIPELINE_STAGES
+    start_idx = stages.index(start_stage)
+    stop_idx = stages.index(stop_stage)
+
+    current_input = prompt
+    final_plan = ""
+
+    if start_idx <= 0 <= stop_idx:
+        # Project stage
+        console_logger.info("Running project stage")
+        project_agent = BaseExperiment.build_project_agent(
+            cfg_dict=cfg_dict,
+            compatible_agents=PlanGenerationExperiment.compatible_project_agents,
+            logger=logger,
+        )
+        final_plan = asyncio.run(
+            project_agent.generate_project_plan(prompt=current_input, output_dir=out_path)
+        )
+        current_input = project_plan_path.read_text(encoding="utf-8")
+
+    if start_idx <= 1 <= stop_idx:
+        # Module stage: read project_plan.md as input
+        if not project_plan_path.exists():
+            console_logger.warning(
+                "Skipping module stage: project_plan.md not found. Run project stage first."
+            )
+        else:
+            if start_idx == 1:
+                current_input = project_plan_path.read_text(encoding="utf-8")
+            console_logger.info("Running module stage")
+            module_agent = BaseExperiment.build_module_agent(
+                cfg_dict=cfg_dict,
+                compatible_agents=PlanGenerationExperiment.compatible_module_agents,
+                logger=logger,
+            )
+            final_plan = asyncio.run(
+                module_agent.generate_module_plan(
+                    prompt=current_input, output_dir=out_path
+                )
+            )
+            current_input = module_plan_path.read_text(encoding="utf-8")
+
+    if start_idx <= 2 <= stop_idx:
+        # Task stage: read module_plan.md as input
+        if not module_plan_path.exists():
+            console_logger.warning(
+                "Skipping task stage: module_plan.md not found. Run module stage first."
+            )
+        else:
+            if start_idx == 2:
+                current_input = module_plan_path.read_text(encoding="utf-8")
+            console_logger.info("Running task stage")
+            task_agent = BaseExperiment.build_task_agent(
+                cfg_dict=cfg_dict,
+                compatible_agents=PlanGenerationExperiment.compatible_task_agents,
+                logger=logger,
+            )
+            final_plan = asyncio.run(
+                task_agent.generate_task_plan(
+                    prompt=current_input, output_dir=out_path
+                )
+            )
+            if task_plan_path.exists():
+                console_logger.info(f"Task plan written to: {task_plan_path}")
+
+    return final_plan
+
+
 def _generate_project_plan_worker(
     prompt: str,
     index: int,
@@ -54,7 +152,7 @@ def _generate_project_plan_worker(
     cfg_dict: dict,
     experiment_run_id: str | None = None,
 ) -> str | None:
-    """Generate a single project plan in an isolated process.
+    """Generate plans for a single prompt (project → module → task pipeline).
 
     Top-level function for pickling when using ProcessPoolExecutor.
     All arguments must be picklable.
@@ -69,24 +167,25 @@ def _generate_project_plan_worker(
     Returns:
         Final plan text on success, None on failure (exception is raised).
     """
-    from omegaconf import OmegaConf
-
     out_path = Path(output_dir) / f"prompt_{index:03d}"
     out_path.mkdir(parents=True, exist_ok=True)
-    logger = BaseLogger(output_dir=out_path)
 
     log_path = out_path / "plan.log"
     with FileLoggingContext(log_file_path=log_path, suppress_stdout=True):
-        console_logger.info(f"Project plan worker started for prompt {index:03d}")
+        console_logger.info(f"Pipeline worker started for prompt {index:03d}")
 
-        cfg = OmegaConf.create(cfg_dict)
-        agent = BaseExperiment.build_project_agent(
+        pipeline_cfg = cfg_dict.get("experiment", {}).get("pipeline", {})
+        start_stage = pipeline_cfg.get("start_stage", "project")
+        stop_stage = pipeline_cfg.get("stop_stage", "project")
+
+        plan = _run_pipeline_stages(
+            prompt=prompt,
+            out_path=out_path,
             cfg_dict=cfg_dict,
-            compatible_agents=PlanGenerationExperiment.compatible_project_agents,
-            logger=logger,
+            start_stage=start_stage,
+            stop_stage=stop_stage,
         )
-        plan = asyncio.run(agent.generate_project_plan(prompt=prompt, output_dir=out_path))
-        console_logger.info(f"Project plan worker completed for prompt {index:03d}")
+        console_logger.info(f"Pipeline worker completed for prompt {index:03d}")
         return plan
 
 
@@ -96,22 +195,33 @@ class PlanGenerationExperiment(BaseExperiment):
     compatible_project_agents = {
         "workflow_project_agent": StatefulProjectAgent,
     }
+    compatible_module_agents = {
+        "workflow_module_agent": StatefulModuleAgent,
+    }
+    compatible_task_agents = {
+        "workflow_task_agent": StatefulTaskAgent,
+    }
 
     def _run_serial(self, prompts_with_ids: list[tuple[int, str]], cfg_dict: dict) -> None:
-        """Run project planning sequentially."""
-        console_logger.info("Running project planning serially")
+        """Run project → module → task pipeline sequentially."""
+        pipeline_cfg = cfg_dict.get("experiment", {}).get("pipeline", {})
+        start_stage = pipeline_cfg.get("start_stage", "project")
+        stop_stage = pipeline_cfg.get("stop_stage", "project")
+        console_logger.info(
+            f"Running pipeline serially (stages: {start_stage} → {stop_stage})"
+        )
 
         for index, prompt in prompts_with_ids:
             out_dir = self.output_dir / f"prompt_{index:03d}"
             out_dir.mkdir(parents=True, exist_ok=True)
-            logger = BaseLogger(output_dir=out_dir)
 
-            agent = BaseExperiment.build_project_agent(
+            _run_pipeline_stages(
+                prompt=prompt,
+                out_path=out_dir,
                 cfg_dict=cfg_dict,
-                compatible_agents=self.compatible_project_agents,
-                logger=logger,
+                start_stage=start_stage,
+                stop_stage=stop_stage,
             )
-            asyncio.run(agent.generate_project_plan(prompt=prompt, output_dir=out_dir))
             console_logger.info(f"Completed prompt {index:03d}")
 
     def _run_parallel(
@@ -165,12 +275,9 @@ class PlanGenerationExperiment(BaseExperiment):
                 f"start_stage '{start_stage}' cannot be after stop_stage '{stop_stage}'"
             )
 
-        # Only run project stage for now
-        if start_stage != "project" or stop_stage != "project":
-            console_logger.info(
-                f"Only project stage is supported; running project. "
-                f"(start_stage={start_stage}, stop_stage={stop_stage})"
-            )
+        console_logger.info(
+            f"Pipeline stages: {start_stage} → {stop_stage}"
+        )
 
         csv_path = self.cfg.experiment.get("csv_path")
         if csv_path:
@@ -200,9 +307,9 @@ class PlanGenerationExperiment(BaseExperiment):
                 experiment_run_id=experiment_run_id,
             )
 
-        console_logger.info("All project plans completed")
+        console_logger.info("All pipeline runs completed")
         console_logger.info("=" * 60)
-        console_logger.info(bold_green("ALL PROJECT PLANS COMPLETED!"))
+        console_logger.info(bold_green("ALL PIPELINE RUNS COMPLETED!"))
         console_logger.info("=" * 60)
         console_logger.info(yellow("Outputs saved under: ") + str(self.output_dir))
         console_logger.info("=" * 60)

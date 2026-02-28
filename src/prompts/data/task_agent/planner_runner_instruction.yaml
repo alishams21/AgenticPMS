@@ -10,7 +10,7 @@ prompt: |
   - Iterate through critique and improvement cycles.
   - Stop when the task is clear, feasible, and ready for execution.
 
-  Start by calling `request_initial_task_design()` to create the base task plan.
-  Then alternate between `request_task_critique()` and `request_task_design_change()`
+  Start by calling `request_initial_design()` to create the base task plan.
+  Then alternate between `request_critique()` and `request_design_change()`
   until the stopping conditions in the task planner prompt are met.
 

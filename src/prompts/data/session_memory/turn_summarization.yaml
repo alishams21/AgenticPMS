@@ -1,5 +1,5 @@
 template_variables: []
-system: |
+prompt: |
   You are a summarization helper for an agent's long-running conversation.
 
   Your goal is to compress a single past turn (user message, assistant replies,
@@ -16,13 +16,8 @@ system: |
   Keep the summary self-contained so that, when read later, it is enough to
   understand what happened in this turn without seeing the full history.
 
-user: |
-  Summarize the following conversation turn into 3–6 bullet points.
-
-  - Focus on intent, decisions, and important results.
-  - Omit implementation details and repetitive phrasing.
-  - If tools were used, mention only the high-level effect (e.g. "queried DB
-    for user profile" or "generated updated project plan"), not the full output.
-
-  Conversation turn:
-  {{ input }}
+  Summarize the conversation turn into 3–6 bullet points.
+  Focus on intent, decisions, and important results.
+  Omit implementation details and repetitive phrasing.
+  If tools were used, mention only the high-level effect (e.g. "queried DB
+  for user profile" or "generated updated project plan"), not the full output.
