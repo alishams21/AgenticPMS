@@ -44,12 +44,14 @@ class StatefulTaskAgent(BaseStatefulAgent, BaseTaskAgent):
         BaseTaskAgent.__init__(self, cfg=cfg, logger=logger)
         BaseStatefulAgent.__init__(self, cfg=cfg, logger=logger)
 
+        # Per-run, per-agent session prefix (e.g. prompt_000_task_designer.db).
         output_dir_name = (
             Path(self.logger.output_dir).name
             if getattr(self.logger, "output_dir", None) is not None
             else ""
         )
-        self.session_prefix: str = f"{output_dir_name}_" if output_dir_name else ""
+        base = f"{output_dir_name}_" if output_dir_name else ""
+        self.session_prefix: str = f"{base}task_"
 
         self.designer_session, self.critic_session = self._create_sessions(
             session_prefix=self.session_prefix

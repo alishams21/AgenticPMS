@@ -41,13 +41,13 @@ class StatefulProjectAgent(BaseStatefulAgent, BaseProjectAgent):
         BaseProjectAgent.__init__(self, cfg=cfg, logger=logger)
         BaseStatefulAgent.__init__(self, cfg=cfg, logger=logger)
 
-        # Use a per-run session prefix derived from the logger's output_dir so
-        # that designer and critic share a session namespace for this run while
-        # remaining isolated from other runs.
+        # Per-run, per-agent session prefix so each agent's designer/critic
+        # sessions are isolated (e.g. prompt_000_project_designer.db).
         output_dir_name = Path(self.logger.output_dir).name if getattr(
             self.logger, "output_dir", None
         ) is not None else ""
-        self.session_prefix: str = f"{output_dir_name}_" if output_dir_name else ""
+        base = f"{output_dir_name}_" if output_dir_name else ""
+        self.session_prefix: str = f"{base}project_"
 
         # Persistent agent sessions (reuse BaseStatefulAgent implementation).
         # Both designer and critic sessions share the same prefix so they are
