@@ -99,6 +99,20 @@ class TaskAgentPrompts(PromptEnum):
     CRITIC_RUNNER_INSTRUCTION = "critic_runner_instruction"
 
 
+class VisualizationAgentPrompts(PromptEnum):
+    """Registry of visualization agent prompts (data/visualization_agent/)."""
+
+    _BASE_PATH = nonmember("visualization_agent")
+
+    PLANNER_AGENT = "planner_agent"
+    PLANNER_RUNNER_INSTRUCTION = "planner_runner_instruction"
+    DESIGNER_AGENT = "designer_agent"
+    DESIGNER_INITIAL_INSTRUCTION = "designer_initial_instruction"
+    DESIGNER_CRITIQUE_INSTRUCTION = "designer_critique_instruction"
+    CRITIC_AGENT = "critic_agent"
+    CRITIC_RUNNER_INSTRUCTION = "critic_runner_instruction"
+
+
 class PromptRegistry:
     """Central registry for all available prompts."""
 

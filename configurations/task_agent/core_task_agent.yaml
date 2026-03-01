@@ -46,5 +46,5 @@ api_timeout:
 # Maximum review cycles
 max_review_cycles: 2
 # BaseStatefulAgent: number of critique rounds
-max_critique_rounds: 3
-early_finish_min_score: 8
+max_critique_rounds: 1
+early_finish_min_score: 5

@@ -54,10 +54,10 @@ api_timeout:
   pool: 1800
 
 # Maximum number of planning-review cycles before stopping
-max_review_cycles: 3
+max_review_cycles: 1
 
 # BaseStatefulAgent: number of critique rounds (0 = no request_critique/request_design_change tools)
-max_critique_rounds: 3
+max_critique_rounds: 1
 
 # Early finish threshold - stop if all tasks meet quality criteria
-early_finish_min_score: 8
+early_finish_min_score: 5

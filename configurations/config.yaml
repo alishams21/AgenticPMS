@@ -14,3 +14,4 @@ defaults:
   - project_agent: workflow_project_agent # Top-level agent managing the overall project
   - module_agent: workflow_module_agent # Agent managing modules/components within the project
   - task_agent: workflow_task_agent # Agent managing individual tasks under each module
+  - visualization_agent: workflow_visualization_agent # Agent that draws hierarchy diagram from plans

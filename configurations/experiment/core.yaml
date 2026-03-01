@@ -19,12 +19,12 @@ prompts: [
 num_workers: 1
 
 # Pipeline stage control
-# Stages run in order: project → module → task → subtask
+# Stages run in order: project → module → task → visualization
 # Set start_stage to resume from a specific stage
 # Set stop_stage to stop after a specific stage
 pipeline:
-  start_stage: "project"       # Options: project, module, task
-  stop_stage: "task"           # Options: project, module, task (task = full pipeline)
+  start_stage: "project"       # Options: project, module, task, visualization
+  stop_stage: "visualization"  # Options: project, module, task, visualization (visualization = full pipeline)
   resume_from_path: null       # Path to previous experiment output
   parallel_modules: false      # Parallelize modules (mutually exclusive with num_workers > 1)
   max_parallel_modules: 1

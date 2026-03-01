@@ -9,6 +9,7 @@ from src.module_agents.base_module_agent import BaseModuleAgent
 from src.project_agents.base_project_agent import BaseProjectAgent
 from src.task_agents.base_task_agent import BaseTaskAgent
 from src.utils.logging import BaseLogger
+from src.visualization_agents.base_visualization_agent import BaseVisualizationAgent
 
 
 class BaseExperiment(ABC):
@@ -24,6 +25,7 @@ class BaseExperiment(ABC):
     compatible_project_agents: dict[str, type] = {}
     compatible_module_agents: dict[str, type] = {}
     compatible_task_agents: dict[str, type] = {}
+    compatible_visualization_agents: dict[str, type] = {}
 
     def __init__(self, cfg: DictConfig):
         self.cfg = cfg
@@ -110,6 +112,37 @@ class BaseExperiment(ABC):
                 f"Task agent '{agent_name}' not found in compatible_task_agents."
             )
 
+        return compatible_agents[agent_name](
+            cfg=OmegaConf.create(agent_config),
+            logger=logger,
+        )
+
+    @staticmethod
+    def build_visualization_agent(
+        cfg_dict: dict | DictConfig,
+        compatible_agents: dict[str, type],
+        logger: BaseLogger,
+    ) -> BaseVisualizationAgent:
+        """Build visualization agent from config."""
+        config_dict = (
+            OmegaConf.to_container(cfg_dict, resolve=True)
+            if isinstance(cfg_dict, DictConfig)
+            else cfg_dict
+        )
+        agent_config = config_dict.get("visualization_agent")
+        if agent_config is None:
+            raise ValueError(
+                "Config has no 'visualization_agent' key. "
+                "Add visualization_agent to defaults in config.yaml."
+            )
+        agent_name = agent_config.get("_name")
+        if not agent_name:
+            raise ValueError("visualization_agent._name is required.")
+        if agent_name not in compatible_agents:
+            raise ValueError(
+                f"Visualization agent '{agent_name}' not found in "
+                "compatible_visualization_agents."
+            )
         return compatible_agents[agent_name](
             cfg=OmegaConf.create(agent_config),
             logger=logger,

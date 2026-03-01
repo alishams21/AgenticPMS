@@ -18,15 +18,22 @@ The system is **autonomous**: you provide a brief, and agents iteratively refine
 
 ---
 
-## Three-Stage Pipeline
+## Pipeline Stages
 
-| Stage   | Input                    | Output           | Agent              |
-|---------|--------------------------|------------------|--------------------|
-| Project | User prompt (brief)      | `project_plan.md` | StatefulProjectAgent |
-| Module  | `project_plan.md`        | `module_plan.md`  | StatefulModuleAgent  |
-| Task    | `module_plan.md`         | `task_plan.md`    | StatefulTaskAgent    |
+| Stage         | Input                         | Output                 | Agent                       |
+|---------------|-------------------------------|------------------------|-----------------------------|
+| Project       | User prompt (brief)           | `project_plan.md`      | StatefulProjectAgent        |
+| Module        | `project_plan.md`             | `module_plan.md`      | StatefulModuleAgent         |
+| Task          | `module_plan.md`              | `task_plan.md`        | StatefulTaskAgent           |
+| Visualization | `project_plan.md` + `module_plan.md` + `task_plan.md` | `hierarchy_diagram.png` (and optionally `.pdf`) | StatefulVisualizationAgent |
 
-Each stage runs independently. The experiment orchestrator chains them: project output becomes module input, module output becomes task input. You can run all three stages or a subset (e.g., project only) via configuration.
+Each stage runs independently. The experiment orchestrator chains them in order. The **visualization** stage runs after task and reads all three plan files to produce a hierarchy diagram (Mermaid → PNG/PDF). The visualization critic uses a **vision-capable model (VLM)** to compare the diagram image against the plans for consistency. For PNG/PDF rendering, [mermaid-cli](https://www.npmjs.com/package/@mermaid-js/mermaid-cli) is required. Install it from the project root with:
+
+```bash
+npm install
+```
+
+Alternatively, the code can use `npx -y @mermaid-js/mermaid-cli` if Node.js and npm are available (no local install needed).
 
 ---
 
@@ -110,6 +117,15 @@ Outputs are written under `outputs/<timestamp>/<run>/prompt_<id>/`.
 uv sync
 ```
 
+For the **visualization** stage (PNG/PDF diagram output), also install the Mermaid CLI and Chrome for Puppeteer:
+
+```bash
+npm install
+npx puppeteer browsers install chrome-headless-shell
+```
+
+(Node.js ≥18 required; Node ≥20 recommended for mermaid-cli. The second command installs a headless Chrome used by mermaid-cli to render diagrams.)
+
 **Run plan generation** (project → module → task)
 
 ```bash
@@ -122,4 +138,12 @@ uv run python main.py +name=plan_project
 uv run python main.py +name=plan_project experiment.pipeline.start_stage=project experiment.pipeline.stop_stage=project
 ```
 
+**Run full pipeline including visualization** (project → module → task → hierarchy diagram)
+
+```bash
+uv run python main.py +name=plan_project experiment.pipeline.stop_stage=visualization
+```
+
 See `configurations/` for pipeline and agent configuration examples.
+
+For details on the visualization stage (how the diagram is produced, where files are written, and why you might not see PNG/PDF), see [docs/VISUALIZATION_AGENT.md](docs/VISUALIZATION_AGENT.md).

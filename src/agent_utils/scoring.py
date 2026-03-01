@@ -282,6 +282,32 @@ class CeilingCritiqueWithScores(CritiqueWithScores):
         ]
 
 
+@dataclass
+class VisualizationCritiqueWithScores(CritiqueWithScores):
+    """Visualization (hierarchy diagram) critic with consistency and completeness.
+
+    Used when the critic evaluates a diagram image against project/module/task plans.
+    """
+
+    hierarchy_consistency: CategoryScore
+    """Project components on top, modules under components, tasks under modules."""
+    completeness: CategoryScore
+    """All components, modules, and tasks from the plans appear in the diagram."""
+    clarity: CategoryScore
+    """Diagram is readable and labels match plan names."""
+    layout_quality: CategoryScore
+    """Layout is logical and dependencies are clear."""
+
+    def get_scores(self) -> list[CategoryScore]:
+        """Return all visualization critique category scores."""
+        return [
+            self.hierarchy_consistency,
+            self.completeness,
+            self.clarity,
+            self.layout_quality,
+        ]
+
+
 def compute_total_score(scores: CritiqueWithScores) -> int:
     """Compute total score across all categories.
 

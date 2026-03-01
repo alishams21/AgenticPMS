@@ -11,7 +11,8 @@ dependencies = [
     "open-clip-torch>=2.20.0",
     "openai>=2.8.0",
     "openai-agents>=0.6.4",
-    "python-dotenv>=1.1.0"
+    "python-dotenv>=1.1.0",
+    "pyyaml>=6.0",
 ]
 
 [build-system]

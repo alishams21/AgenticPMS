@@ -14,13 +14,16 @@ from src.module_agents.stateful_module_agent import StatefulModuleAgent
 from src.project_agents.stateful_project_agent import StatefulProjectAgent
 from src.task_agents.stateful_task_agent import StatefulTaskAgent
 from src.utils.logging import BaseLogger, FileLoggingContext
+from src.visualization_agents.stateful_visualization_agent import (
+    StatefulVisualizationAgent,
+)
 from src.utils.parallel import run_parallel_isolated
 from src.utils.print_utils import bold_green, yellow
 
 console_logger = logging.getLogger(__name__)
 
-# Pipeline stages for plan generation (project → module → task)
-PIPELINE_STAGES = ["project", "module", "task"]
+# Pipeline stages for plan generation (project → module → task → visualization)
+PIPELINE_STAGES = ["project", "module", "task", "visualization"]
 
 
 def _load_prompts_from_csv(csv_path: str) -> list[tuple[int, str]]:
@@ -56,17 +59,17 @@ def _run_pipeline_stages(
     start_stage: str,
     stop_stage: str,
 ) -> str | None:
-    """Run project → module → task pipeline stages for a single prompt.
+    """Run project → module → task → visualization pipeline stages for a single prompt.
 
     Args:
         prompt: Initial project brief.
         out_path: Output directory for this prompt (e.g. prompt_000).
         cfg_dict: Resolved config as dict.
-        start_stage: First stage to run (project, module, or task).
-        stop_stage: Last stage to run (project, module, or task).
+        start_stage: First stage to run (project, module, task, or visualization).
+        stop_stage: Last stage to run (project, module, task, or visualization).
 
     Returns:
-        Final plan text from the last stage, or None on failure.
+        Final plan text or diagram path from the last stage, or None on failure.
     """
     from omegaconf import OmegaConf
 
@@ -142,6 +145,33 @@ def _run_pipeline_stages(
             if task_plan_path.exists():
                 console_logger.info(f"Task plan written to: {task_plan_path}")
 
+    if start_idx <= 3 <= stop_idx:
+        # Visualization stage: read all three plan files, produce hierarchy diagram
+        if not all(
+            p.exists()
+            for p in (project_plan_path, module_plan_path, task_plan_path)
+        ):
+            console_logger.warning(
+                "Skipping visualization stage: project_plan.md, module_plan.md, or "
+                "task_plan.md not found. Run project, module, and task stages first."
+            )
+        else:
+            console_logger.info("Running visualization stage")
+            console_logger.info("[VIS] Step 0: Building visualization agent; output_dir=%s", out_path)
+            visualization_agent = BaseExperiment.build_visualization_agent(
+                cfg_dict=cfg_dict,
+                compatible_agents=PlanGenerationExperiment.compatible_visualization_agents,
+                logger=logger,
+            )
+            console_logger.info("[VIS] Step 0b: Calling generate_hierarchy_diagram(output_dir=%s)", out_path)
+            diagram_result = asyncio.run(
+                visualization_agent.generate_hierarchy_diagram(output_dir=out_path)
+            )
+            console_logger.info("[VIS] Step 0c: generate_hierarchy_diagram returned: %r", diagram_result)
+            if diagram_result:
+                final_plan = str(diagram_result)
+                console_logger.info(f"Hierarchy diagram written to: {diagram_result}")
+
     return final_plan
 
 
@@ -190,7 +220,7 @@ def _generate_project_plan_worker(
 
 
 class PlanGenerationExperiment(BaseExperiment):
-    """Experiment that runs project (and optionally module/task) planning only."""
+    """Experiment that runs project, module, task, and optionally visualization stages."""
 
     compatible_project_agents = {
         "workflow_project_agent": StatefulProjectAgent,
@@ -200,6 +230,9 @@ class PlanGenerationExperiment(BaseExperiment):
     }
     compatible_task_agents = {
         "workflow_task_agent": StatefulTaskAgent,
+    }
+    compatible_visualization_agents = {
+        "workflow_visualization_agent": StatefulVisualizationAgent,
     }
 
     def _run_serial(self, prompts_with_ids: list[tuple[int, str]], cfg_dict: dict) -> None:

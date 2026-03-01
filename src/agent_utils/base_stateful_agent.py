@@ -55,11 +55,12 @@ console_logger = logging.getLogger(__name__)
 
 
 class AgentType(Enum):
-    """Agent type for plan-based workflows (project/module/task)."""
+    """Agent type for plan-based workflows (project/module/task/visualization)."""
 
     PROJECT = "project"
     MODULE = "module"
     TASK = "task"
+    VISUALIZATION = "visualization"
 
 
 def log_agent_usage(result: RunResult, agent_name: str) -> None:
@@ -198,9 +199,11 @@ class BaseStatefulAgent(ABC):
 
         # Add reasoning effort and verbosity if key is provided.
         if settings_key:
-            reasoning_cfg = self.cfg.openai.reasoning_effort
-            effort = getattr(reasoning_cfg, settings_key)
-            kwargs["reasoning"] = Reasoning(effort=effort)
+            reasoning_cfg = getattr(self.cfg.openai, "reasoning_effort", None)
+            if reasoning_cfg is not None:
+                effort = getattr(reasoning_cfg, settings_key, None)
+                if effort is not None and str(effort).lower() != "none":
+                    kwargs["reasoning"] = Reasoning(effort=effort)
 
             verbosity_cfg = self.cfg.openai.verbosity
             verbosity = getattr(verbosity_cfg, settings_key)
@@ -826,48 +829,68 @@ class BaseStatefulAgent(ABC):
             Designer's report of initial design.
         """
         console_logger.info("Tool called: request_initial_design")
+        try:
+            # Get instruction from prompt registry with domain-specific enum and kwargs.
+            console_logger.info("Building initial design instruction (get_prompt)...")
+            prompt_enum = self._get_initial_design_prompt_enum()
+            prompt_kwargs = self._get_initial_design_prompt_kwargs()
+            instruction = self.prompt_registry.get_prompt(
+                prompt_enum=prompt_enum, **prompt_kwargs
+            )
+            console_logger.info("Building initial design input (may include image)...")
+            # Build input (may include context image if enabled).
+            input_message = self._build_initial_design_input(instruction)
 
-        # Get instruction from prompt registry with domain-specific enum and kwargs.
-        prompt_enum = self._get_initial_design_prompt_enum()
-        prompt_kwargs = self._get_initial_design_prompt_kwargs()
-        instruction = self.prompt_registry.get_prompt(
-            prompt_enum=prompt_enum, **prompt_kwargs
-        )
-
-        # Build input (may include context image if enabled).
-        input_message = self._build_initial_design_input(instruction)
-
-        # Designer runs with initial design instruction.
-        result = await Runner.run(
-            starting_agent=self.designer,
-            input=input_message,
-            session=self.designer_session,
-            max_turns=self.cfg.agents.designer_agent.max_turns,
-            run_config=self._create_run_config(),
-        )
-        log_agent_usage(result=result, agent_name="DESIGNER (INITIAL)")
-
-        if result.final_output:
-            log_agent_response(
-                response=result.final_output, agent_name="DESIGNER (INITIAL)"
+            # Designer runs with initial design instruction.
+            console_logger.info("Running designer (initial design)...")
+            result = await Runner.run(
+                starting_agent=self.designer,
+                input=input_message,
+                session=self.designer_session,
+                max_turns=self.cfg.agents.designer_agent.max_turns,
+                run_config=self._create_run_config(),
+            )
+            try:
+                log_agent_usage(result=result, agent_name="DESIGNER (INITIAL)")
+            except Exception as e:
+                console_logger.warning("Could not log designer usage (continuing): %s", e)
+            has_output = bool(getattr(result, "final_output", None))
+            console_logger.info(
+                "Designer finished: final_output=%s (len=%s)",
+                "yes" if has_output else "no",
+                len(result.final_output) if has_output else 0,
             )
 
-            # Persist the initial design into the designer session so that
-            # downstream critics can read the plan from session history.
-            try:
-                if self.designer_session is not None:
-                    await self.designer_session.add_items(
-                        [
-                            {
-                                "role": "assistant",
-                                "content": result.final_output,
-                            }
-                        ]
-                    )
-            except Exception as e:  # Best-effort; logging only.
-                console_logger.warning(
-                    f"Failed to append initial design output to designer session: {e}"
+            if result.final_output:
+                log_agent_response(
+                    response=result.final_output, agent_name="DESIGNER (INITIAL)"
                 )
-            self._on_designer_output(result.final_output)
 
-        return result.final_output or ""
+                # Persist the initial design into the designer session so that
+                # downstream critics can read the plan from session history.
+                try:
+                    if self.designer_session is not None:
+                        await self.designer_session.add_items(
+                            [
+                                {
+                                    "role": "assistant",
+                                    "content": result.final_output,
+                                }
+                            ]
+                        )
+                except Exception as e:  # Best-effort; logging only.
+                    console_logger.warning(
+                        f"Failed to append initial design output to designer session: {e}"
+                    )
+                console_logger.info("Calling _on_designer_output(len=%d) -> extract Mermaid, render PNG/PDF", len(result.final_output))
+                self._on_designer_output(result.final_output)
+                console_logger.info("_on_designer_output completed")
+            else:
+                console_logger.warning("Designer returned no final_output; skipping _on_designer_output")
+
+            return result.final_output or ""
+        except Exception as e:
+            console_logger.exception(
+                "request_initial_design failed (designer did not run): %s", e
+            )
+            return f"(Initial design failed: {e})"

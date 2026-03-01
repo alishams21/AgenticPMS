@@ -8,6 +8,7 @@ from .registry import (
     ProjectAgentPrompts,
     PromptRegistry,
     TaskAgentPrompts,
+    VisualizationAgentPrompts,
 )
 
 # Data directory: agent YAMLs under project_agent/, module_agent/, task_agent/
@@ -23,4 +24,5 @@ __all__ = [
     "ProjectAgentPrompts",
     "ModuleAgentPrompts",
     "TaskAgentPrompts",
+    "VisualizationAgentPrompts",
 ]
