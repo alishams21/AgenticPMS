@@ -17,6 +17,10 @@ The system is **autonomous**: you provide a brief, and agents iteratively refine
 
 ---
 
+The system constructs the roadmap through a tree of four stages. The **root stage** (project) generates the high-level layout: it determines components and boundaries and produces `project_plan.md`. Each component is then refined independently through the **module** stage, which produces a module structure per component, and the **task** stage, which adds concrete tasks per module—each stage guided by the previous stage’s output. The **visualization** stage runs once per plan type (project, then module, then task), spawning one diagram branch per plan, each guided by that plan’s content. All stages are implemented as agentic interactions (planner/designer/critic). This hierarchical prompt refinement lets each level make local decisions while staying coherent with the original brief. The orchestrator assembles the outputs into plan files and diagrams under a single run directory, suitable for handoff to execution or downstream tools.
+
+![Hierarchical scene construction pipelin](figures/pipeline.png)
+ 
 ## Pipeline Stages
 
 | Stage         | Input                         | Output                 | Agent                       |
